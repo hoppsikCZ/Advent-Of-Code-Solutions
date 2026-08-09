@@ -1,0 +1,35 @@
+def chainSmartLeastComplexBrute(self):
+        steps = None
+        # print(self.position)
+        # print(self.puzzle.switches)
+        least_idx = self.findLeastComplexIdx()
+        contains_least = self.findContainingIdx(least_idx)
+        not_zeroed = self.findNonZeroedButtons()
+        allowed = tuple(set(contains_least) & set(not_zeroed))
+        least_val = self.position[least_idx]
+        # print(f"Chaining with: n={len(allowed)}, r={least_val}, complexity={calcComplexity(len(allowed), least_val)}")
+        possible = smartCombinations(allowed, least_val)
+        for potential in possible:
+            # print(potential)
+            snap = self.takeSnapshot()
+            for switch in potential:
+                self.addSwitchIndex(switch[0], switch[1])
+        
+            if min(self.position) == 0:
+                if sum(self.position) == 0:
+                    return least_val
+                #print(self.position)
+                switches_left = self.findNonZeroedButtons()
+                if switches_left: 
+                    brute_result = self.chainSmartLeastComplexBrute()  
+                    if brute_result >= 0:
+                        if not steps:
+                            steps = brute_result
+                        elif brute_result < steps:
+                            steps = brute_result
+            self.restoreSnapshot(snap)          
+                    
+        if steps:     
+            return steps + least_val
+        else:
+            return ERR_SMART_FAIL

@@ -1,0 +1,228 @@
+from itertools import combinations, combinations_with_replacement
+import math
+
+# DON'T TOUCH
+ERR_BRUTE_COMPLEXITY = -1
+ERR_BRUTE_IMPOSSIBLE = -2
+
+ERR_SMART_MAX_FAIL = -3
+
+# CONFIG
+MAX_BRUTE_BUFFER = 0
+COMPLEXITY_CUTOFF = 1000000
+
+
+class Puzzle:
+    def __init__(self, solution: tuple[int, ...], switches):
+        self.solution = solution
+        self.switches = tuple(sorted(tuple(switches), key=len, reverse=True))
+        
+    def __str__(self):
+        return str(self.solution) + " " + str(self.switches)
+    
+class Solver:
+    def __init__(self, puzzle: Puzzle):
+        self.puzzle = puzzle
+        self.position = list(puzzle.solution)
+        self.swithes_used = [0] * len(puzzle.switches)
+        self.switch_order = []
+
+                                      
+    def addSwitchIndex(self, index: int, count = 1):
+        self.swithes_used[index] += count
+        
+        self.switch_order.extend([index] * count)
+        for point in self.puzzle.switches[index]:
+            self.position[point] -= count
+    
+            
+    def popSwitch(self):
+        last = self.switch_order[-1]
+        self.swithes_used[last] -= 1
+        self.switch_order.pop()
+        for point in self.puzzle.switches[last]:
+            self.position[point] += 1
+            
+    def addSwitch(self, switch):
+        for index in switch:
+            # print(index)
+            self.position[index] -= 1
+            
+    def reset(self):
+        self.position = [0] * len(self.puzzle.solution)
+        self.swithes_used = [0] * len(self.puzzle.switches)
+        
+    def takeSnapshot(self):
+        return SolverSnapshot(self)
+        
+    def restoreSnapshot(self, snapshot: SolverSnapshot):
+        self.position = snapshot.position.copy()
+        self.swithes_used = snapshot.switches_used.copy()
+        self.switch_order = snapshot.switch_order.copy()
+        
+    def findZeroedIdxs(self):
+        zeroed_positions = tuple(
+            i
+            for i, pos in enumerate(self.position)
+            if pos == 0
+        )
+        valid_switches = tuple(
+            i
+            for i in range(len(self.puzzle.switches))
+            if set(zeroed_positions).isdisjoint(self.puzzle.switches[i]) 
+        )
+        
+    def prioritySolve(self):
+        i = 0
+        blacklist = []
+        
+        while True:
+            i += 1
+            
+            optimal = [i for i, x in enumerate(self.position) if x == max(self.position)]
+            # print(optimal)
+            best = tuple()
+            best_idx = -1
+            for idx, switch in enumerate(self.puzzle.switches):
+                #print(switch)
+                if set(switch).issubset(optimal) and len(switch) > len(best) and not idx in blacklist:
+                    best = switch
+                    best_idx = idx
+                
+            #Nejprve se musi checknout, jestli neni kombinace, ktera snizi vsechny, ale potrebnou o vic, pak az se muze jit na blacklist.
+                    
+            if len(best) == 0 or best_idx == -1:
+                if len(self.switch_order) == 0:
+                    return -1
+                blacklist.append(self.switch_order[-1])
+                self.popSwitch()
+                print("Blacklist:" + str(blacklist))
+                i -= 1
+            else:
+                self.addSwitchIndex(best_idx)    
+                print(self.position)
+                # if max(self.position) == 0:
+                #     return i
+                all_zero = True  
+                # for num in self.position:
+                #     if num != 0:
+                #         all_zero = False
+                #         break
+                if self.position == [0] * len(self.position):
+                    return i
+                      
+            
+    def maxBrute(self):
+            if MAX_BRUTE_BUFFER > min(self.position):
+                return self.bruteForce()
+            
+            contains_max = tuple(
+                i 
+                for i, switch in enumerate(self.puzzle.switches) 
+                if set(
+                    max_idx 
+                    for max_idx, max_val in enumerate(self.position) 
+                    if max_val == max(self.position)
+                    ).issubset(switch)
+            )
+            allowed = tuple(
+                i 
+                for i in contains_max
+                if len(self.puzzle.switches[i]) == len(max(map(lambda sw_idx: self.puzzle.switches[sw_idx], contains_max), key=len))
+            )
+            i = 0
+            blacklist = []
+            while i < sum(self.puzzle.solution):
+                        i += 1
+                        test = combinations_with_replacement(allowed, i)
+                        best_position_sum = sum(self.position)
+                        best_snap = self.takeSnapshot()
+                        for solve in test:
+                            snap = self.takeSnapshot()
+                            for switch in solve:
+                                self.addSwitchIndex(switch)
+                        
+                            if min(self.position) == MAX_BRUTE_BUFFER: 
+                                if sum(self.position) < best_position_sum:
+                                    best_position_sum = sum(self.position)
+                                    best_snap = self.takeSnapshot()
+                                    
+                            self.restoreSnapshot(snap)
+                                    
+                        if min(best_snap.position) == MAX_BRUTE_BUFFER:
+                            self.restoreSnapshot(best_snap)
+                            while True:
+                                brute_result = self.bruteForce(self.findZeroedIdxs())
+                                if brute_result == ERR_BRUTE_IMPOSSIBLE:
+                                    return ERR_BRUTE_IMPOSSIBLE
+                                elif brute_result == ERR_BRUTE_IMPOSSIBLE:
+                                    return ERR_BRUTE_COMPLEXITY
+                                else:
+                                    return len(self.switch_order)
+            return -1
+
+    def smartMaxBrute(self):
+            contains_max = tuple(
+                i 
+                for i, switch in enumerate(self.puzzle.switches) 
+                if set(
+                    max_idx 
+                    for max_idx, max_val in enumerate(self.position) 
+                    if max_val == max(self.position)
+                    ).issubset(switch)
+            )
+            allowed = tuple(
+                i 
+                for i in contains_max
+                if len(self.puzzle.switches[i]) == len(max(map(lambda sw_idx: self.puzzle.switches[sw_idx], contains_max), key=len))
+            )
+            i = 0
+            while i < sum(self.puzzle.solution):
+                i += 1
+                test = combinations_with_replacement(allowed, i)
+                for solve in test:
+                    snap = self.takeSnapshot()
+                    for switch in solve:
+                        self.addSwitchIndex(switch)
+                
+                    if min(self.position) == 0:
+                        brute_result = self.bruteForce(self.findZeroedIdxs())  
+                        if brute_result >= 0:
+                            return i + brute_result
+                    self.restoreSnapshot(snap)
+                                    
+                            
+            return ERR_SMART_MAX_FAIL
+
+
+            
+    def bruteForce(self, switches = tuple()):
+        if not switches:
+            switches = range(len(self.puzzle.switches))
+        i = max(self.position) - 1
+        while True:
+            i += 1
+            if i > sum(self.position):
+                return ERR_BRUTE_IMPOSSIBLE
+            
+            test = combinations_with_replacement(switches, i)
+            NoC = math.comb(len(switches) + i - 1, i)
+            complexity = NoC * i
+            print(f"Bruteforcing with: n={len(switches)}, r={i}, NoC={NoC}, complexity={complexity}")
+            if complexity > COMPLEXITY_CUTOFF:
+                return ERR_BRUTE_COMPLEXITY
+                        
+            for solve in test:
+                snap = self.takeSnapshot()
+                for switch in solve:
+                    self.addSwitchIndex(switch)
+
+                if self.position == [0] * len(self.position): 
+                    return len(solve)
+                self.restoreSnapshot(snap)
+                
+class SolverSnapshot:
+    def __init__(self, solver: Solver):
+        self.position = solver.position.copy()
+        self.switches_used = solver.swithes_used.copy()
+        self.switch_order = solver.switch_order.copy()

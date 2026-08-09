@@ -1,0 +1,81 @@
+# ==========================================
+# Languages & Ecosystems
+# ==========================================
+
+# Rust
+/target/
+**/*.rs.bk
+*.rmeta
+
+# TypeScript / Node / Bun
+node_modules/
+bun.lockb
+.bun/
+dist/
+out/
+.next/
+*.log
+
+# Go
+/bin/
+/pkg/
+*.exe
+*.exe?
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# C# / .NET
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.suo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+
+# C / C++
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.out
+*.app
+build/
+cmake-build-*/
+
+# Zig
+zig-cache/
+zig-out/
+
+# ==========================================
+# IDEs & System Files
+# ==========================================
+# JetBrains / Rider
+.idea/
+*.iws
+*.iml
+*.ipr
+*.idea/
+.idea_modules/
+
+# Rider-specific generated folders
+*_Resharper*/
+[R|r]ider*/
