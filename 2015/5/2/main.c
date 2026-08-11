@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     unsigned int good_count = 0;
     while (fgets(line, sizeof(line), fr) != NULL) {
         line[strlen(line) - 1] = '\0';
-        printf("%s\n", line);
+        // printf("%s\n", line);
         if (!is_naughty(line))
             good_count++;
     }
