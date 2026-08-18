@@ -22,9 +22,11 @@ std::vector<Reindeer> parse_data(std::istream &file) {
     std::vector<Reindeer> vec{};
 
     std::string discard{};
-    int speed{};
-    int stamina{};
-    int cooldown{};
+    int speed;
+    int stamina;
+    int cooldown;
+    char discard_chr;
+    std::string discart_str;
 
     while (file >> discard >> discard >> discard >> speed >> discard >>
            discard >> stamina >> discard >> discard >> discard >> discard >>
