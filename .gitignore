@@ -60,6 +60,7 @@ env/
 *.app
 build/
 cmake-build-*/
+main
 
 # Zig
 zig-cache/
