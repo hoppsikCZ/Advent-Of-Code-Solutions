@@ -39,7 +39,7 @@ std::pair<std::string, std::vector<Action>> parse_data(std::istream &input) {
     return {start_string, actions};
 }
 
-int calculate_unique(std::string_view input, std::vector<Action> actions) {
+int generate_cure(std::string_view input, std::vector<Action> actions) {
     std::vector<std::string> unique{};
     for (auto action : actions) {
         auto strings = action.generate_reaplacements(input);
@@ -59,6 +59,6 @@ int main(int argc, char *argv[]) {
     std::ifstream file(argc > 1 ? argv[1] : "../input.txt");
     auto [start_string, actions] = parse_data(file);
 
-    std::cout << calculate_unique(start_string, actions) << '\n';
+    std::cout << generate_cure(start_string, actions) << '\n';
     return 0;
 }

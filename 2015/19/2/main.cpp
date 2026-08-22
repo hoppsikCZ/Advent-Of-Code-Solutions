@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -10,12 +11,15 @@ struct Action {
     std::string input{};
     std::string output{};
 
-    std::vector<std::string> generate_reaplacements(std::string_view original) {
+    std::vector<std::string> generate_reaplacements(std::string_view original,
+                                                    bool reverse = false) {
         size_t pos = 0;
         std::vector<std::string> vec;
-        while ((pos = original.find(input, pos)) != std::string_view::npos) {
+        while ((pos = original.find(reverse ? output : input, pos)) !=
+               std::string_view::npos) {
             std::string copy(original);
-            copy.replace(pos, input.size(), output);
+            copy.replace(pos, reverse ? output.size() : input.size(),
+                         reverse ? input : output);
             vec.push_back(copy);
             pos++;
         }
@@ -39,41 +43,47 @@ std::pair<std::string, std::vector<Action>> parse_data(std::istream &input) {
     return {start_string, actions};
 }
 
-int generate_cure(std::string_view input, std::vector<Action> actions) {
-    std::vector<std::string> all_unique{"e"};
-    std::vector<std::string> unique{"e"};
-    int counter = 0;
-    while (true) {
-        counter++;
-        std::vector<std::string> new_unique{};
-        for (auto el : unique) {
-            for (auto action : actions) {
-                auto strings = action.generate_reaplacements(el);
+int generate_cure_recursive(std::string_view input,
+                            const std::vector<Action> &actions,
+                            std::vector<std::string> &all_unique,
+                            std::string_view goal) {
+    // std::cout << input << '\n';
 
-                for (auto s : strings) {
-                    if (s == input) {
-                        return counter;
-                    }
-                    auto test =
-                        std::find(all_unique.begin(), all_unique.end(), s);
-                    if (test == all_unique.end()) {
-                        new_unique.push_back(s);
-                        all_unique.push_back(s);
-                    }
+    for (auto action : actions) {
+        auto strings = action.generate_reaplacements(input, true);
+
+        for (auto s : strings) {
+            if (s == goal) {
+                // std::cout << goal << '\n';
+                return 1;
+            }
+            auto test = std::find(all_unique.begin(), all_unique.end(), s);
+            if (test == all_unique.end()) {
+                all_unique.push_back(s);
+                auto rec_result =
+                    generate_cure_recursive(s, actions, all_unique, goal);
+
+                if (rec_result >= 0) {
+                    return rec_result + 1;
                 }
             }
         }
-        unique = new_unique;
-        std::cout << unique.size() << '\n';
     }
 
-    return unique.size();
+    return -1;
 }
 
 int main(int argc, char *argv[]) {
     std::ifstream file(argc > 1 ? argv[1] : "../input.txt");
     auto [start_string, actions] = parse_data(file);
+    std::sort(actions.begin(), actions.end(), [](Action a, Action b) {
+        return a.output.size() - a.input.size() >
+               b.output.size() - b.input.size();
+    });
+    std::vector<std::string> all_unique{"e"};
+    std::vector<std::string> unique{"e"};
 
-    std::cout << generate_cure(start_string, actions) << '\n';
+    std::cout << generate_cure_recursive(start_string, actions, all_unique, "e")
+              << '\n';
     return 0;
 }
