@@ -52,7 +52,7 @@ class Board {
             }
         }
 
-        print_board();
+        // print_board();
     }
 
     void step(int count) {
@@ -80,7 +80,7 @@ class Board {
             arr_ = temp;
             board_ = std::mdspan(arr_.data(), HEIGHT, WIDTH);
             count--;
-            print_board();
+            // print_board();
         }
     }
 
